@@ -1,3 +1,7 @@
+import { ParticleSystem, Particle, Raindrop } from "./particles.js";
+import { getRandom } from "./math.js";
+import { Vector2 } from "./vector.js";
+
 const SPLASH_LIFETIME = 10;
 const SPLASHES_COUNT = 5;
 
@@ -7,51 +11,6 @@ const CRITICAL_RAINDROPS_COUNT = 5;
 
 const UMBRELLA_RADIUS = 50;
 
-class Raindrop{
-    constructor(x, y, depth, speed){
-        this.x = x;
-        this.y = y;
-        this.depth = depth;
-        this.speed = speed;
-        this.height = 20/this.depth;
-    }
-
-    update(){
-        this.y += this.speed;
-    }
-
-    /**
-     * @param {CanvasRenderingContext2D} ctx 
-     */
-    render(ctx){
-        ctx.fillStyle = 'blue';
-        ctx.fillRect(this.x, this.y, 1, this.height);
-    }
-}
-
-class Splash{
-    constructor(x, y, angle){
-        this.x = x;
-        this.y = y;
-        this.angle = angle;
-        this.lifetime = SPLASH_LIFETIME;
-    }
-
-    update(){
-        this.x += Math.cos(this.angle);
-        this.y -= Math.sin(this.angle);
-
-        this.lifetime -= 1;
-    }
-
-    /**
-     * @param {CanvasRenderingContext2D} ctx 
-     */
-    render(ctx){
-        ctx.fillStyle = 'blue';
-        ctx.fillRect(this.x, this.y, 1, 1);
-    }
-}
 
 class Umbrella{
     constructor(x, y, radius){
@@ -73,7 +32,7 @@ class Umbrella{
             return false;
         }
 
-        let dist = Math.sqrt( (this.x-raindrop.x)**2 + ((this.y-this.height)-(raindrop.y+raindrop.height))**2);
+        let dist = Math.sqrt( (this.x-raindrop.position.x)**2 + ((this.y-this.height)-(raindrop.position.y+raindrop.height))**2);
 
         return dist <= this.radius;
     }
@@ -105,32 +64,18 @@ class Umbrella{
     }
 }
 
-function getRandom(min, max) {
-    return Math.random() * (max - min) + min;
-}
-
-/**
- * @param {number} maxWidth
- * @returns {Raindrop}
- */
-function spawn(maxWidth){
-    return new Raindrop(Math.random()*maxWidth, -30, getRandom(1, MAX_RAINDROP_DEPTH), getRandom(10, 20));
-}
-
-function splash(x, y){
-    return new Splash(x, y, getRandom(Math.PI/4, Math.PI-Math.PI/4));
-}
 
 
 /**
  * 
- * @param {Raindrop[]} drops
+ * @param {ParticleSystem} system
  * @param {number} maxWidth
  * @param {number} rainLevel
  */
-function initRain(drops, maxWidth, rainLevel){
-    for(let i = drops.length; i < RAINDROPS_COUNT[rainLevel-1]; i++){
-        drops.push(spawn(maxWidth));
+function initRain(system, maxWidth, rainLevel){
+    for(let i = system.particles.length; i < RAINDROPS_COUNT[rainLevel-1]; i++){
+        let depth = getRandom(1, MAX_RAINDROP_DEPTH);
+        system.spawnRaindropAlong(new Vector2(0, -30), maxWidth, depth);
     }
 }
 
@@ -162,16 +107,15 @@ document.addEventListener('DOMContentLoaded', e => {
     canvas.height = window.screen.height / 1.5;
 
     let ctx = canvas.getContext('2d');
-    let drops = [];
-    let splashes = [];
     let umbrella = new Umbrella(0, 0, UMBRELLA_RADIUS);
+    let system = new ParticleSystem();
 
     let rainLevelSlider = document.getElementById('rain-slider');
     let rainLevel = rainLevelSlider.value;
     rainLevelSlider.addEventListener('change', e => {
         rainLevel = e.target.value;
-        drops = [];
-        initRain(drops, canvas.width, rainLevel);
+        system.clear();
+        initRain(system, canvas.width, rainLevel);
     });
 
     let umbrellaToggle = document.getElementById('umbrella-toggle');
@@ -194,42 +138,36 @@ document.addEventListener('DOMContentLoaded', e => {
         umbrella.isActive = false;
     });
 
+
     function loop(){
-        drops = drops.filter(e => e.y+e.height < ground_level_at(e.depth, canvas.height) && !umbrella.touched(e)/*canvas.height+e.depth*/);
-    
-        if(drops.length <= CRITICAL_RAINDROPS_COUNT){
-            initRain(drops, canvas.width, rainLevel);
-        }
-        splashes = splashes.filter(e => e.lifetime > 0);
-    
+        
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     
         if(umbrella.isActive && umbrella.enabled){
             umbrella.render(ctx);
         }
-    
-        
-        drops.forEach(e => {
-            e.update();
-    
-            if(e.y+e.height > ground_level_at(e.depth, canvas.height) ||umbrella.touched(e)/*canvas.height*/){
-                for(let i = 0; i < SPLASHES_COUNT; i++){
-                    splashes.push(splash(e.x, e.y+e.height));
+
+        system.clearDeadParticles();
+
+        system.update(particle => {
+            if(particle instanceof Raindrop){
+                if( umbrella.touched(particle) || particle.position.y+particle.height >= ground_level_at(particle.depth, canvas.height)){
+                    particle.isDead = true;
+                    for(let i = 0; i < SPLASHES_COUNT; i++){
+                        system.spawnSplashAt(particle.position, SPLASH_LIFETIME);
+                    }
+
+                    system.spawnRaindropAlong(new Vector2(0, -30), canvas.width, getRandom(1, MAX_RAINDROP_DEPTH));
                 }
-                drops.push(spawn(canvas.width));
             }
-    
-            e.render(ctx);
         });
-    
-        splashes.forEach(e => {
-            e.update();
-            e.render(ctx);
-        });
+
+        system.render(ctx);
+        
     
         requestAnimationFrame(loop);
     }
 
-    initRain(drops, canvas.width, rainLevel);
+    initRain(system, canvas.width, rainLevel);
     loop();
 });
