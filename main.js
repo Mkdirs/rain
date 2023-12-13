@@ -5,9 +5,8 @@ import { Vector2 } from "./vector.js";
 const SPLASH_LIFETIME = 10;
 const SPLASHES_COUNT = 5;
 
-const RAINDROPS_COUNT = [100, 600, 1000, 4000];
+const RAINDROPS_COUNT = [100, 500, 2000];
 const MAX_RAINDROP_DEPTH = 5;
-const CRITICAL_RAINDROPS_COUNT = 5;
 
 const UMBRELLA_RADIUS = 50;
 
