@@ -109,10 +109,14 @@ document.addEventListener('DOMContentLoaded', e => {
     let umbrella = new Umbrella(0, 0, UMBRELLA_RADIUS);
     let system = new ParticleSystem();
 
+    let audio = document.querySelector('audio');
+
     let rainLevelSlider = document.getElementById('rain-slider');
     let rainLevel = rainLevelSlider.value;
+    audio.volume = RAINDROPS_COUNT[rainLevel-1] / RAINDROPS_COUNT[RAINDROPS_COUNT.length-1];
     rainLevelSlider.addEventListener('change', e => {
         rainLevel = e.target.value;
+        audio.volume = RAINDROPS_COUNT[rainLevel-1] / RAINDROPS_COUNT[RAINDROPS_COUNT.length-1];
         system.clear();
         initRain(system, canvas.width, rainLevel);
     });
