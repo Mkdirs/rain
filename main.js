@@ -111,6 +111,17 @@ document.addEventListener('DOMContentLoaded', e => {
 
     let audio = document.querySelector('audio');
 
+    let audiToggle = document.getElementById('audio-toggle');
+    audiToggle.checked = false;
+    
+    audiToggle.addEventListener('change', ev => {
+        if(ev.target.checked){
+            audio.play();
+        }else{
+            audio.pause();
+        }
+    });
+
     let rainLevelSlider = document.getElementById('rain-slider');
     let rainLevel = rainLevelSlider.value;
     audio.volume = RAINDROPS_COUNT[rainLevel-1] / RAINDROPS_COUNT[RAINDROPS_COUNT.length-1];
