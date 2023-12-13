@@ -156,10 +156,6 @@ document.addEventListener('DOMContentLoaded', e => {
     function loop(){
         
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-        if(umbrella.isActive && umbrella.enabled){
-            umbrella.render(ctx);
-        }
 
         system.clearDeadParticles();
 
@@ -177,6 +173,10 @@ document.addEventListener('DOMContentLoaded', e => {
         });
 
         system.render(ctx);
+
+        if(umbrella.isActive && umbrella.enabled){
+            umbrella.render(ctx);
+        }
         
     
         requestAnimationFrame(loop);
