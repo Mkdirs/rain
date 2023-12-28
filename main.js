@@ -102,8 +102,8 @@ function ground_level_at(depth, canvasHeight){
 document.addEventListener('DOMContentLoaded', e => {
     let canvas = document.querySelector('canvas');
 
-    canvas.width = window.screen.width;
-    canvas.height = window.screen.height / 1.5;
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
 
     let ctx = canvas.getContext('2d');
     let umbrella = new Umbrella(0, 0, UMBRELLA_RADIUS);
@@ -183,5 +183,5 @@ document.addEventListener('DOMContentLoaded', e => {
     }
 
     initRain(system, canvas.width, rainLevel);
-    loop();
+    requestAnimationFrame(loop);
 });
